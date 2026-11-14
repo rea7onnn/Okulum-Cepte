@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KampüsPlan — Öğrenci Sorumluluk ve Çalışma Asistanı</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .tab-active {
+      background-color: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Üst Bilgi Çubuğu -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          KP
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">KampüsPlan</h1>
+          <p class="text-xs text-slate-500" id="headerDateText">4 Kasım 2026 Çarşamba • Öğrenci Takip Platformu</p>
+        </div>
+      </div>
+
+      <!-- Hızlı Durum Rozetleri & Bildirim -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="badgePendingHw">0 Bekleyen Ödev</span>
+        </div>
+        <div class="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-800 px-3 py-1.5 rounded-lg text-xs font-medium">
+          <span>📅</span>
+          <span id="badgeUpcomingExams">0 Yaklaşan Sınav</span>
+        </div>
+        <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-lg text-xs font-medium">
+          <span>🎒</span>
+          <span id="badgeBagStatus">Çanta %0</span>
+        </div>
+        <button id="btnResetDemo" class="text-xs text-slate-500 hover:text-indigo-600 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-200 transition">
+          Örnek Verileri Sıfırla
+        </button>
+      </div>
+    </div>
+
+    <!-- Sekme Menüsü -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 overflow-x-auto custom-scrollbar">
+      <nav class="flex items-center gap-1.5 py-2 min-w-max" aria-label="Ana Menü">
+        <button data-tab="dashboard" class="nav-tab tab-active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2">
+          <span>🏠</span> Genel Bakış
+        </button>
+        <button data-tab="schedule" class="nav-tab text-slate-600 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2">
+          <span>📚</span> Ders Programı
+        </button>
+        <button data-tab="homework" class="nav-tab text-slate-600 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2">
+          <span>📝</span> Ödev Hatırlatıcı
+        </button>
+        <button data-tab="exams" class="nav-tab text-slate-600 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2">
+          <span>🎯</span> Sınav &amp; Etkinlikler
+        </button>
+        <button data-tab="bag" class="nav-tab text-slate-600 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2">
+          <span>🎒</span> Çanta Kontrolü
+        </button>
+        <button data-tab="study" class="nav-tab text-slate-600 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2">
+          <span>⏱️</span> Çalışma Planı
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Ana İçerik Alanı -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- 1. GENEL BAKIŞ (DASHBOARD) -->
+    <section id="tab-dashboard" class="tab-panel space-y-6">
+      <!-- Üst Uyarı / Hatırlatma Bandı -->
+      <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 rounded-2xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-xs font-medium backdrop-blur-sm">
+            <span>🔔 Akıllı Günlük Özet</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold" id="heroGreeting">Merhaba! Bugünkü sorumlulukların kontrol altında.</h2>
+          <p class="text-indigo-100 text-sm" id="heroSubtext">Yaklaşan ödev teslimlerini, sınav geri sayımlarını ve çanta listeni tek ekrandan takip edebilirsin.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="quickGoHomework" class="bg-white text-indigo-700 hover:bg-indigo-50 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-sm transition">
+            + Ödev Ekle
+          </button>
+          <button id="quickGoExam" class="bg-indigo-500/40 hover:bg-indigo-500/60 text-white border border-white/25 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition">
+            + Sınav / Etkinlik Ekle
+          </button>
+        </div>
+      </div>
+
+      <!-- 4'lü Özet Kartları -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Bugünkü Dersler</span>
+            <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">📚</span>
+          </div>
+          <p class="text-2xl font-bold text-slate-900 mt-2" id="statTodayClasses">0 Ders</p>
+          <p class="text-xs text-slate-500 mt-1" id="statTodayDayName">Çarşamba programı</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Acil Ödevler</span>
+            <span class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">⏰</span>
+          </div>
+          <p class="text-2xl font-bold text-slate-900 mt-2" id="statUrgentHw">0 Ödev</p>
+          <p class="text-xs text-slate-500 mt-1" id="statTotalHwText">Toplam 0 aktif ödev</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Sıradaki Sınav</span>
+            <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold">🎯</span>
+          </div>
+          <p class="text-2xl font-bold text-slate-900 mt-2" id="statNextExamTitle">-</p>
+          <p class="text-xs text-rose-600 font-medium mt-1" id="statNextExamDays">Planlanmış sınav yok</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Çanta &amp; Çalışma</span>
+            <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">✅</span>
+          </div>
+          <p class="text-2xl font-bold text-slate-900 mt-2" id="statBagReadyRatio">0/0 Eşya</p>
+          <p class="text-xs text-slate-500 mt-1" id="statStudyDoneRatio">Bugünkü çalışma: 0/0 tamamlandı</p>
+        </div>
+      </div>
+
+      <!-- Ana Gövde: 3 Sütunlu Özet -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Yaklaşan Ödev Teslimleri -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                <span>📝</span> Yaklaşan Ödev Teslimleri
+              </h3>
+              <button data-goto="homework" class="goto-btn text-xs font-semibold text-indigo-600 hover:underline">Tümünü Gör →</button>
+            </div>
+            <div id="dashHomeworkList" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Sınav Takvimi & Okul Etkinlikleri -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                <span>🎯</span> Sınavlar &amp; Okul Etkinlikleri
+              </h3>
+              <button data-goto="exams" class="goto-btn text-xs font-semibold text-indigo-600 hover:underline">Takvimi Aç →</button>
+            </div>
+            <div id="dashExamEventList" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Bugünün Dersleri & Çanta Kontrol Özeti -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                <span>📚</span> Bugünün Ders Programı
+              </h3>
+              <select id="dashDaySelector" class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 text-slate-700 font-medium">
+                <option value="Pazartesi">Pazartesi</option>
+                <option value="Salı">Salı</option>
+                <option value="Çarşamba" selected>Çarşamba</option>
+                <option value="Perşembe">Perşembe</option>
+                <option value="Cuma">Cuma</option>
+              </select>
+            </div>
+            <div id="dashScheduleList" class="space-y-2"></div>
+          </div>
+
+          <div class="border-t border-slate-100 pt-4">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <span>🎒</span> Hızlı Çanta Kontrolü
+              </h4>
+              <button data-goto="bag" class="goto-btn text-xs font-semibold text-indigo-600 hover:underline">Düzenle →</button>
+            </div>
+            <div id="dashBagQuickList" class="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar pr-1"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. DERS PROGRAMI (WEEKLY SCHEDULE) -->
+    <section id="tab-schedule" class="tab-panel hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Haftalık Ders Programı</h2>
+          <p class="text-xs text-slate-500">Derslerini, saatlerini, sınıf/laboratuvar bilgisini ve ders için gereken materyalleri buradan yönetebilirsin.</p>
+        </div>
+
+        <!-- Yeni Ders Ekleme Formu -->
+        <form id="formAddClass" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 w-full lg:w-auto">
+          <select id="classDay" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium bg-slate-50">
+            <option value="Pazartesi">Pazartesi</option>
+            <option value="Salı">Salı</option>
+            <option value="Çarşamba" selected>Çarşamba</option>
+            <option value="Perşembe">Perşembe</option>
+            <option value="Cuma">Cuma</option>
+          </select>
+          <input id="classTime" type="text" placeholder="Saat (Örn: 09:00 - 09:45)" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <input id="className" type="text" placeholder="Ders Adı (Örn: Fizik)" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <input id="classRoom" type="text" placeholder="Sınıf / Öğretmen" class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <input id="classMaterials" type="text" placeholder="Çanta Eşyası (Örn: Fizik Defteri)" class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-4 py-2 text-xs transition">
+            + Dersi Ekle
+          </button>
+        </form>
+      </div>
+
+      <!-- 5 Günlük Tablo -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4" id="weeklyScheduleGrid"></div>
+    </section>
+
+    <!-- 3. ÖDEV TESLİM HATIRLATICISI (HOMEWORK REMINDERS) -->
+    <section id="tab-homework" class="tab-panel hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Ödev Teslim Hatırlatmaları</h2>
+            <p class="text-xs text-slate-500">Teslim tarihlerini kaçırmamak için ödevlerini öncelik ve ders bilgisiyle kaydet.</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button data-hwfilter="all" class="hw-filter-btn bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg">Tümü</button>
+            <button data-hwfilter="pending" class="hw-filter-btn bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg">Bekleyenler</button>
+            <button data-hwfilter="completed" class="hw-filter-btn bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg">Tamamlananlar</button>
+          </div>
+        </div>
+
+        <form id="formAddHomework" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 pt-2 border-t border-slate-100">
+          <input id="hwCourse" type="text" placeholder="Ders (Örn: Matematik)" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <input id="hwTitle" type="text" placeholder="Ödev Konusu / Açıklama" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs lg:col-span-2" />
+          <input id="hwDueDate" type="date" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <select id="hwPriority" class="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50">
+            <option value="Yüksek">Yüksek Öncelik</option>
+            <option value="Orta" selected>Orta Öncelik</option>
+            <option value="Düşük">Düşük Öncelik</option>
+          </select>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-4 py-2 text-xs transition">
+            + Ödev Ekle
+          </button>
+        </form>
+      </div>
+
+      <div id="homeworkContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- 4. SINAV TAKVİMİ VE OKUL ETKİNLİKLERİ -->
+    <section id="tab-exams" class="tab-panel hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Sınav Takvimi &amp; Okul Etkinlikleri</h2>
+            <p class="text-xs text-slate-500">Yazılı tarihlerini, proje sunumlarını, kulüp toplantılarını ve okul gezilerini tek takvimde takip et.</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button data-evfilter="all" class="ev-filter-btn bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg">Tümü</button>
+            <button data-evfilter="Sınav" class="ev-filter-btn bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg">Sadece Sınavlar</button>
+            <button data-evfilter="Etkinlik" class="ev-filter-btn bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg">Okul Etkinlikleri</button>
+          </div>
+        </div>
+
+        <form id="formAddExamEvent" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5 pt-2 border-t border-slate-100">
+          <select id="evType" class="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50 font-medium">
+            <option value="Sınav">🎯 Sınav / Yazılı</option>
+            <option value="Etkinlik">🎉 Okul Etkinliği</option>
+          </select>
+          <input id="evTitle" type="text" placeholder="Başlık (Örn: 1. Dönem Biyoloji Yazılısı)" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs lg:col-span-2" />
+          <input id="evDate" type="date" required class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <input id="evNotes" type="text" placeholder="Konular / Konum (Örn: Hücre Bölünmesi, B-204)" class="border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-4 py-2 text-xs transition">
+            + Takvime Ekle
+          </button>
+        </form>
+      </div>
+
+      <div id="examEventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- 5. ÇANTA KONTROL LİSTESİ (BAG CHECKLIST) -->
+    <section id="tab-bag" class="tab-panel hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Akıllı Çanta Kontrol Listesi</h2>
+          <p class="text-xs text-slate-500">Okula giderken defter, kitap veya proje malzemesi unutma! Seçtiğin günün derslerine göre çantanı otomatik doldurabilirsin.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="bagDaySelect" class="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50 font-medium">
+            <option value="Pazartesi">Pazartesi Dersleri İçin</option>
+            <option value="Salı">Salı Dersleri İçin</option>
+            <option value="Çarşamba" selected>Çarşamba Dersleri İçin</option>
+            <option value="Perşembe">Perşembe Dersleri İçin</option>
+            <option value="Cuma">Cuma Dersleri İçin</option>
+          </select>
+          <button id="btnSyncBagFromSchedule" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold text-xs px-3.5 py-2 rounded-xl transition">
+            ✨ Günün Ders Materyallerini Ekle
+          </button>
+          <button id="btnUncheckAllBag" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs px-3.5 py-2 rounded-xl transition">
+            Tüm İşaretleri Kaldır
+          </button>
+        </div>
+      </div>
+
+      <!-- İlerleme Çubuğu ve Yeni Eşya Ekleme -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h3 class="font-bold text-slate-900 text-sm">Çanta Hazırlık Durumu</h3>
+          <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+            <div id="bagProgressBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p id="bagProgressText" class="text-xs text-slate-600 font-medium">0 / 0 eşya çantaya eklendi (%0)</p>
+
+          <form id="formAddBagItem" class="space-y-2.5 pt-3 border-t border-slate-100">
+            <label class="block text-xs font-semibold text-slate-700">Yeni Eşya Ekle</label>
+            <input id="bagItemName" type="text" placeholder="Örn: Hesap Makinesi, Resim Çantası" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+            <select id="bagItemCategory" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50">
+              <option value="Ders Materyali">📘 Ders Materyali</option>
+              <option value="Kırtasiye & Araç">✏️ Kırtasiye &amp; Araç</option>
+              <option value="Kişisel & Günlük">🥤 Kişisel &amp; Günlük</option>
+            </select>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-4 py-2 text-xs transition">
+              + Listeye Ekle
+            </button>
+          </form>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div id="bagItemsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. GÜNLÜK VE HAFTALIK ÇALIŞMA PLANI (STUDY PLANNER + POMODORO) -->
+    <section id="tab-study" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Sol: Pomodoro Odaklanma Sayacı -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+              ⏱️ Odaklanma Sayacı
+            </span>
+            <h3 class="text-base font-bold text-slate-900 mt-2">Pomodoro Çalışma Zamanlayıcı</h3>
+            <p class="text-xs text-slate-500 mt-0.5">25 dakika verimli çalışma, 5 dakika kısa mola ile dikkatin dağılmadan planını tamamla.</p>
+          </div>
+
+          <div class="bg-slate-900 text-white rounded-2xl p-6 text-center space-y-3">
+            <div class="flex justify-center gap-2">
+              <button id="btnModeWork" class="text-xs px-3 py-1 rounded-lg bg-indigo-600 font-semibold">25dk Çalışma</button>
+              <button id="btnModeBreak" class="text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">5dk Mola</button>
+            </div>
+            <div id="pomodoroDisplay" class="text-4xl sm:text-5xl font-bold tracking-wider font-mono">25:00</div>
+            <p id="pomodoroStatusText" class="text-xs text-slate-400">Başlamaya hazır</p>
+            <div class="flex justify-center gap-2 pt-1">
+              <button id="btnTimerToggle" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs px-5 py-2 rounded-xl transition">
+                Başlat
+              </button>
+              <button id="btnTimerReset" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-medium text-xs px-4 py-2 rounded-xl transition">
+                Sıfırla
+              </button>
+            </div>
+          </div>
+
+          <!-- Yeni Çalışma Bloğu Ekle -->
+          <form id="formAddStudyBlock" class="space-y-2.5 pt-3 border-t border-slate-100">
+            <h4 class="text-xs font-bold text-slate-800">Yeni Çalışma Planı Ekle</h4>
+            <div class="grid grid-cols-2 gap-2">
+              <select id="studyScope" class="border border-slate-200 rounded-xl px-2.5 py-2 text-xs bg-slate-50">
+                <option value="Günlük">Günlük Plan</option>
+                <option value="Haftalık">Haftalık Hedef</option>
+              </select>
+              <select id="studyDay" class="border border-slate-200 rounded-xl px-2.5 py-2 text-xs bg-slate-50">
+                <option value="Bugün">Bugün</option>
+                <option value="Pazartesi">Pazartesi</option>
+                <option value="Salı">Salı</option>
+                <option value="Çarşamba">Çarşamba</option>
+                <option value="Perşembe">Perşembe</option>
+                <option value="Cuma">Cuma</option>
+                <option value="Hafta Sonu">Hafta Sonu</option>
+              </select>
+            </div>
+            <input id="studyTopic" type="text" placeholder="Çalışma Konusu (Örn: 40 Paragraf Sorusu + Fizik Tekrarı)" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+            <input id="studyDuration" type="text" placeholder="Süre / Saat (Örn: 17:30 - 18:30 veya 60 dk)" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs" />
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl px-4 py-2 text-xs transition">
+              + Çalışma Planına Ekle
+            </button>
+          </form>
+        </div>
+
+        <!-- Sağ: Günlük ve Haftalık Çalışma Blokları -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-slate-900">📅 Günlük Çalışma Planı (Saatlik Odak)</h3>
+                <p class="text-xs text-slate-500">Bugün okul sonrası tamamlaman gereken çalışma oturumları</p>
+              </div>
+              <span id="dailyStudyBadge" class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">0/0 Tamamlandı</span>
+            </div>
+            <div id="dailyStudyList" class="space-y-2.5"></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-slate-900">📆 Haftalık Çalışma &amp; Tekrar Hedefleri</h3>
+                <p class="text-xs text-slate-500">Hafta boyunca ders bazlı konu tekrarı ve soru çözümü hedeflerin</p>
+              </div>
+              <span id="weeklyStudyBadge" class="text-xs font-semibold bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full">0/0 Tamamlandı</span>
+            </div>
+            <div id="weeklyStudyList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bildirim Toast -->
+  <div id="toastNotice" class="fixed bottom-4 right-4 z-50 hidden bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+    <span>✨</span>
+    <span id="toastText">İşlem kaydedildi</span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'kampusplan_student_state_v1';
+    const TODAY_STR = '2026-11-04'; // 4 Kasım 2026 Çarşamba
+
+    const DEFAULT_STATE = {
+      classes: [
+        { id: 'c1', day: 'Pazartesi', time: '08:30 - 10:00', name: 'Matematik', room: 'A-201 • Selim Hoca', materials: 'Matematik Defteri, Kareli Soru Bankası' },
+        { id: 'c2', day: 'Pazartesi', time: '10:15 - 11:45', name: 'Türk Dili ve Edebiyatı', room: 'A-201 • Ayşe Hoca', materials: 'Edebiyat Ders Kitabı, Roman İnceleme Notu' },
+        { id: 'c3', day: 'Salı', time: '08:30 - 10:00', name: 'Fizik', room: 'Fizik Lab • Murat Hoca', materials: 'Fizik Lab Föyü, Hesap Makinesi' },
+        { id: 'c4', day: 'Salı', time: '10:15 - 11:45', name: 'İngilizce', room: 'Dil Sınıfı • Clara Hoca', materials: 'İngilizce Workbook, Kelime Defteri' },
+        { id: 'c5', day: 'Çarşamba', time: '08:30 - 10:00', name: 'Kimya', room: 'Kimya Lab • Deniz Hoca', materials: 'Kimya Defteri, Periyodik Cetvel, Lab Önlüğü' },
+        { id: 'c6', day: 'Çarşamba', time: '10:15 - 11:45', name: 'Matematik', room: 'A-201 • Selim Hoca', materials: 'Matematik Defteri, Geometri Cetvel Takımı' },
+        { id: 'c7', day: 'Çarşamba', time: '13:00 - 14:30', name: 'Tarih', room: 'A-201 • Kemal Hoca', materials: 'Tarih Atlası, Ders Notları' },
+        { id: 'c8', day: 'Perşembe', time: '08:30 - 10:00', name: 'Biyoloji', room: 'B-102 • Zeynep Hoca', materials: 'Biyoloji Konu Kitabı, Boyama Kalemleri' },
+        { id: 'c9', day: 'Cuma', time: '09:00 - 10:30', name: 'Coğrafya', room: 'A-201 • Hakan Hoca', materials: 'Coğrafya Harita Defteri' },
+        { id: 'c10', day: 'Cuma', time: '10:45 - 12:15', name: 'Görsel Sanatlar / Proje', room: 'Atölye • Elif Hoca', materials: 'Eskiz Defteri, Çizim Kalemleri' }
+      ],
+      homework: [
+        { id: 'h1', course: 'Kimya', title: 'Kimyasal Türler Arası Etkileşimler çalışma yaprağı (Sayfa 42-45)', dueDate: '2026-11-05', priority: 'Yüksek', completed: false },
+        { id: 'h2', course: 'Matematik', title: 'Fonksiyonlar 2. Test (30 soru çözüm kontrolü)', dueDate: '2026-11-06', priority: 'Yüksek', completed: false },
+        { id: 'h3', course: 'Türk Dili ve Edebiyatı', title: 'Tanzimat Dönemi Hikaye Karşılaştırma Özeti', dueDate: '2026-11-09', priority: 'Orta', completed: false },
+        { id: 'h4', course: 'Tarih', title: 'İlk Çağ Uygarlıkları Harita Çalışması', dueDate: '2026-11-04', priority: 'Orta', completed: true }
+      ],
+      examEvents: [
+        { id: 'e1', type: 'Sınav', title: '1. Dönem Matematik 1. Yazılı Sınavı', date: '2026-11-10', notes: 'Konular: Mantık, Kümeler ve Fonksiyonlar • Derslik A-201' },
+        { id: 'e2', type: 'Sınav', title: 'Kimya Laboratuvar Uygulama & Yazılı Sınavı', date: '2026-11-13', notes: 'Konular: Atom Modelleri ve Periyodik Sistem • Kimya Lab' },
+        { id: 'e3', type: 'Etkinlik', title: 'Okul Bilim ve Teknoloji Kulübü Proje Sunumu', date: '2026-11-06', notes: 'Konferans Salonu Saat 15:00 • Sunum slaytlarını USB belleğe al' },
+        { id: 'e4', type: 'Etkinlik', title: 'Sonbahar Üniversite Tanıtım ve Kariyer Gezisi', date: '2026-11-18', notes: 'Veli izin belgesi son teslim: 12 Kasım' }
+      ],
+      bagItems: [
+        { id: 'b1', name: 'Kimya Defteri & Periyodik Cetvel', category: 'Ders Materyali', checked: true },
+        { id: 'b2', name: 'Lab Önlüğü (Çarşamba Kimya Lab)', category: 'Ders Materyali', checked: false },
+        { id: 'b3', name: 'Matematik Defteri & Geometri Cetveli', category: 'Ders Materyali', checked: true },
+        { id: 'b4', name: 'Tarih Atlası', category: 'Ders Materyali', checked: false },
+        { id: 'b5', name: 'Kalemlik, Uçlu Kalem ve Silgi', category: 'Kırtasiye & Araç', checked: true },
+        { id: 'b6', name: 'Suluk & Öğrenci Paso Kartı', category: 'Kişisel & Günlük', checked: true }
+      ],
+      studyBlocks: [
+        { id: 's1', scope: 'Günlük', day: 'Bugün', topic: 'Kimya Yazılısı İçin Periyodik Özellikler Tekrarı', duration: '17:00 - 17:50', done: true },
+        { id: 's2', scope: 'Günlük', day: 'Bugün', topic: 'Matematik Fonksiyonlar Ödev Testi (30 Soru)', duration: '18:10 - 19:00', done: false },
+        { id: 's3', scope: 'Günlük', day: 'Bugün', topic: '20 Dakika Kitap Okuma & Paragraf Rutini', duration: '20:30 - 20:50', done: false },
+        { id: 's4', scope: 'Haftalık', day: 'Perşembe', topic: 'Fizik Hareket ve Kuvvet Ünitesi Özet Çıkarma', duration: '60 dk', done: false },
+        { id: 's5', scope: 'Haftalık', day: 'Cuma', topic: 'Edebiyat Roman Özeti İlk Taslak Yazımı', duration: '45 dk', done: false },
+        { id: 's6', scope: 'Haftalık', day: 'Hafta Sonu', topic: 'Genel Deneme Sınavı + Yanlış Analizi', duration: '120 dk', done: true }
+      ]
+    };
+
+    let state = loadState();
+    let hwFilter = 'all';
+    let evFilter = 'all';
+
+    // Pomodoro Durumu
+    let timerSeconds = 25 * 60;
+    let timerRunning = false;
+    let timerInterval = null;
+    let timerMode = 'work';
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.classes)) return parsed;
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotice');
+      const text = document.getElementById('toastText');
+      text.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2600);
+    }
+
+    function getDaysDifference(targetDateStr) {
+      const t = new Date(targetDateStr + 'T00:00:00');
+      const now = new Date(TODAY_STR + 'T00:00:00');
+      return Math.round((t - now) / (1000 * 60 * 60 * 24));
+    }
+
+    function formatDateTr(dateStr) {
+      if (!dateStr) return '';
+      const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      return `${parseInt(parts[2], 10)} ${months[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
+    }
+
+    function renderAll() {
+      renderTopBadgesAndDashboard();
+      renderWeeklySchedule();
+      renderHomework();
+      renderExamEvents();
+      renderBagChecklist();
+      renderStudyPlanner();
+    }
+
+    // 1. ÜST ROZETLER VE GENEL BAKIŞ
+    function renderTopBadgesAndDashboard() {
+      const pendingHw = state.homework.filter(h => !h.completed);
+      const urgentHw = pendingHw.filter(h => getDaysDifference(h.dueDate) <= 2);
+      const upcomingExams = state.examEvents
+        .filter(e => e.type === 'Sınav' && getDaysDifference(e.date) >= 0)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const bagTotal = state.bagItems.length;
+      const bagChecked = state.bagItems.filter(b => b.checked).length;
+      const bagPct = bagTotal > 0 ? Math.round((bagChecked / bagTotal) * 100) : 0;
+
+      document.getElementById('badgePendingHw').textContent = `${pendingHw.length} Bekleyen Ödev`;
+      document.getElementById('badgeUpcomingExams').textContent = `${upcomingExams.length} Yaklaşan Sınav`;
+      document.getElementById('badgeBagStatus').textContent = `Çanta %${bagPct}`;
+
+      const selectedDay = document.getElementById('dashDaySelector').value || 'Çarşamba';
+      const todayClasses = state.classes.filter(c => c.day === selectedDay);
+      document.getElementById('statTodayClasses').textContent = `${todayClasses.length} Ders`;
+      document.getElementById('statTodayDayName').textContent = `${selectedDay} programı`;
+
+      document.getElementById('statUrgentHw').textContent = `${urgentHw.length} Acil Ödev`;
+      document.getElementById('statTotalHwText').textContent = `Toplam ${pendingHw.length} bekleyen ödev`;
+
+      if (upcomingExams.length > 0) {
+        const nextEx = upcomingExams[0];
+        const diff = getDaysDifference(nextEx.date);
+        document.getElementById('statNextExamTitle').textContent = nextEx.title.length > 18 ? nextEx.title.slice(0, 18) + '…' : nextEx.title;
+        document.getElementById('statNextExamDays').textContent = diff === 0 ? 'Bugün!' : `${diff} gün kaldı (${formatDateTr(nextEx.date)})`;
+      } else {
+        document.getElementById('statNextExamTitle').textContent = 'Yok';
+        document.getElementById('statNextExamDays').textContent = 'Planlanmış sınav bulunmuyor';
+      }
+
+      const studyTotal = state.studyBlocks.length;
+      const studyDone = state.studyBlocks.filter(s => s.done).length;
+      document.getElementById('statBagReadyRatio').textContent = `${bagChecked}/${bagTotal} Eşya Hazır`;
+      document.getElementById('statStudyDoneRatio').textContent = `Çalışma planı: ${studyDone}/${studyTotal} tamamlandı`;
+
+      // Dashboard Ödev Listesi
+      const dashHwEl = document.getElementById('dashHomeworkList');
+      dashHwEl.innerHTML = '';
+      const sortedHw = [...state.homework].sort((a, b) => Number(a.completed) - Number(b.completed) || a.dueDate.localeCompare(b.dueDate)).slice(0, 4);
+      if (sortedHw.length === 0) {
+        dashHwEl.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Henüz ödev eklenmedi.</p>`;
+      } else {
+        sortedHw.forEach(hw => {
+          const diff = getDaysDifference(hw.dueDate);
+          let badgeClass = 'bg-slate-100 text-slate-700';
+          let badgeLabel = formatDateTr(hw.dueDate);
+          if (hw.completed) {
+            badgeClass = 'bg-emerald-50 text-emerald-700';
+            badgeLabel = 'Tamamlandı';
+          } else if (diff < 0) {
+            badgeClass = 'bg-rose-100 text-rose-800';
+            badgeLabel = 'Süresi Geçti';
+          } else if (diff === 0) {
+            badgeClass = 'bg-rose-50 text-rose-700';
+            badgeLabel = 'Bugün Teslim!';
+          } else if (diff === 1) {
+            badgeClass = 'bg-amber-50 text-amber-700';
+            badgeLabel = 'Yarın Teslim';
+          } else {
+            badgeClass = 'bg-indigo-50 text-indigo-700';
+            badgeLabel = `${diff} gün kaldı`;
+          }
+
+          const item = document.createElement('div');
+          item.className = `p-3 rounded-xl border ${hw.completed ? 'bg-slate-50 border-slate-200 opacity-75' : 'bg-white border-slate-200'} flex items-start justify-between gap-2`;
+          item.innerHTML = `
+            <label class="flex items-start gap-2.5 cursor-pointer flex-1">
+              <input type="checkbox" data-toggle-hw="${hw.id}" ${hw.completed ? 'checked' : ''} class="mt-1 rounded text-indigo-600 focus:ring-indigo-500" />
+              <div>
+                <span class="text-[11px] font-semibold text-indigo-600 uppercase">${hw.course}</span>
+                <p class="text-xs font-medium text-slate-800 ${hw.completed ? 'line-through text-slate-400' : ''}">${hw.title}</p>
+              </div>
+            </label>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap ${badgeClass}">${badgeLabel}</span>
+          `;
+          dashHwEl.appendChild(item);
+        });
+      }
+
+      // Dashboard Sınav & Etkinlik Listesi
+      const dashEvEl = document.getElementById('dashExamEventList');
+      dashEvEl.innerHTML = '';
+      const sortedEv = [...state.examEvents].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
+      if (sortedEv.length === 0) {
+        dashEvEl.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Planlanmış sınav veya etkinlik yok.</p>`;
+      } else {
+        sortedEv.forEach(ev => {
+          const diff = getDaysDifference(ev.date);
+          const isExam = ev.type === 'Sınav';
+          const pillColor = isExam ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-violet-50 text-violet-700 border-violet-200';
+          const dayText = diff === 0 ? 'Bugün' : (diff > 0 ? `${diff} gün sonra` : `${Math.abs(diff)} gün önce`);
+          const card = document.createElement('div');
+          card.className = 'p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-start justify-between gap-2';
+          card.innerHTML = `
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${pillColor}">${ev.type}</span>
+                <span class="text-[11px] text-slate-500">${formatDateTr(ev.date)}</span>
+              </div>
+              <p class="text-xs font-semibold text-slate-900 mt-1">${ev.title}</p>
+              <p class="text-[11px] text-slate-500 mt-0.5">${ev.notes || ''}</p>
+            </div>
+            <span class="text-[11px] font-bold ${isExam ? 'text-rose-600' : 'text-indigo-600'} whitespace-nowrap">${dayText}</span>
+          `;
+          dashEvEl.appendChild(card);
+        });
+      }
+
+      // Dashboard Günün Ders Programı
+      const dashSchedEl = document.getElementById('dashScheduleList');
+      dashSchedEl.innerHTML = '';
+      if (todayClasses.length === 0) {
+        dashSchedEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Bu gün için kayıtlı ders bulunmuyor.</p>`;
+      } else {
+        todayClasses.forEach(c => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs';
+          row.innerHTML = `
+            <div>
+              <p class="font-semibold text-slate-800">${c.name}</p>
+              <p class="text-[11px] text-slate-500">${c.room || 'Sınıf belirtilmedi'}</p>
+            </div>
+            <span class="font-mono text-[11px] bg-white px-2 py-1 rounded-md border border-slate-200 text-slate-700">${c.time}</span>
+          `;
+          dashSchedEl.appendChild(row);
+        });
+      }
+
+      // Dashboard Hızlı Çanta Listesi
+      const dashBagEl = document.getElementById('dashBagQuickList');
+      dashBagEl.innerHTML = '';
+      state.bagItems.forEach(item => {
+        const div = document.createElement('label');
+        div.className = 'flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer text-xs';
+        div.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input type="checkbox" data-toggle-bag="${item.id}" ${item.checked ? 'checked' : ''} class="rounded text-emerald-600 focus:ring-emerald-500" />
+            <span class="${item.checked ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}">${item.name}</span>
+          </div>
+          <span class="text-[10px] text-slate-400">${item.category}</span>
+        `;
+        dashBagEl.appendChild(div);
+      });
+    }
+
+    // 2. HAFTALIK DERS PROGRAMI RENDER
+    function renderWeeklySchedule() {
+      const days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+      const grid = document.getElementById('weeklyScheduleGrid');
+      grid.innerHTML = '';
+
+      days.forEach(day => {
+        const dayClasses = state.classes.filter(c => c.day === day);
+        const col = document.createElement('div');
+        col.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between';
+
+        let itemsHtml = '';
+        if (dayClasses.length === 0) {
+          itemsHtml = `<p class="text-xs text-slate-400 py-6 text-center">Ders eklenmedi</p>`;
+        } else {
+          itemsHtml = dayClasses.map(c => `
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 relative group">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">${c.time}</span>
+                <button data-del-class="${c.id}" class="text-slate-400 hover:text-rose-600 text-xs px-1" title="Dersi Sil">✕</button>
+              </div>
+              <p class="text-sm font-bold text-slate-900">${c.name}</p>
+              <p class="text-[11px] text-slate-500">${c.room || ''}</p>
+              ${c.materials ? `<p class="text-[11px] text-emerald-700 bg-emerald-50/80 px-2 py-1 rounded-md mt-1">🎒 ${c.materials}</p>` : ''}
+            </div>
+          `).join('');
+        }
+
+        col.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <h3 class="font-bold text-slate-900 text-sm">${day}</h3>
+              <span class="text-xs font-medium text-slate-400">${dayClasses.length} ders</span>
+            </div>
+            <div class="space-y-2.5">${itemsHtml}</div>
+          </div>
+        `;
+        grid.appendChild(col);
+      });
+    }
+
+    // 3. ÖDEVLER RENDER
+    function renderHomework() {
+      const container = document.getElementById('homeworkContainer');
+      container.innerHTML = '';
+
+      let list = [...state.homework];
+      if (hwFilter === 'pending') list = list.filter(h => !h.completed);
+      if (hwFilter === 'completed') list = list.filter(h => h.completed);
+      list.sort((a, b) => Number(a.completed) - Number(b.completed) || a.dueDate.localeCompare(b.dueDate));
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">Bu filtrede görüntülenecek ödev bulunmuyor.</div>`;
+        return;
+      }
+
+      list.forEach(hw => {
+        const diff = getDaysDifference(hw.dueDate);
+        let urgencyBadge = '';
+        if (hw.completed) {
+          urgencyBadge = `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">✓ Teslim Edildi / Tamamlandı</span>`;
+        } else if (diff < 0) {
+          urgencyBadge = `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800">⚠️ Teslim Tarihi Geçti</span>`;
+        } else if (diff === 0) {
+          urgencyBadge = `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700">🔥 Bugün Son Gün</span>`;
+        } else if (diff <= 2) {
+          urgencyBadge = `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700">⏳ ${diff} Gün Kaldı</span>`;
+        } else {
+          urgencyBadge = `<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">📅 ${diff} Gün Kaldı</span>`;
+        }
+
+        const prioColor = hw.priority === 'Yüksek' ? 'text-rose-600 bg-rose-50' : (hw.priority === 'Orta' ? 'text-amber-700 bg-amber-50' : 'text-slate-600 bg-slate-100');
+
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl border p-4 shadow-sm flex flex-col justify-between gap-3 ${hw.completed ? 'border-slate-200 opacity-75' : 'border-slate-200'}`;
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <label class="flex items-start gap-3 cursor-pointer flex-1">
+              <input type="checkbox" data-toggle-hw="${hw.id}" ${hw.completed ? 'checked' : ''} class="mt-1 w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-bold text-indigo-600 uppercase tracking-wide">${hw.course}</span>
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded ${prioColor}">${hw.priority} Öncelik</span>
+                </div>
+                <p class="text-sm font-semibold text-slate-900 ${hw.completed ? 'line-through text-slate-400' : ''}">${hw.title}</p>
+              </div>
+            </label>
+            <button data-del-hw="${hw.id}" class="text-slate-400 hover:text-rose-600 text-xs px-1.5 py-1" title="Ödevi Sil">✕</button>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+            <span class="text-slate-500">Son Teslim: <strong>${formatDateTr(hw.dueDate)}</strong></span>
+            ${urgencyBadge}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 4. SINAV TAKVİMİ VE OKUL ETKİNLİKLERİ RENDER
+    function renderExamEvents() {
+      const container = document.getElementById('examEventsContainer');
+      container.innerHTML = '';
+
+      let list = [...state.examEvents];
+      if (evFilter !== 'all') list = list.filter(e => e.type === evFilter);
+      list.sort((a, b) => a.date.localeCompare(b.date));
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="col-span-full bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">Kayıtlı sınav veya okul etkinliği bulunamadı.</div>`;
+        return;
+      }
+
+      list.forEach(ev => {
+        const diff = getDaysDifference(ev.date);
+        const isExam = ev.type === 'Sınav';
+        const badgeStyle = isExam ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-violet-50 text-violet-700 border-violet-200';
+        const countdownLabel = diff === 0 ? 'Bugün!' : (diff > 0 ? `${diff} Gün Kaldı` : `${Math.abs(diff)} Gün Önceydi`);
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between gap-4';
+        card.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold px-2.5 py-1 rounded-lg border ${badgeStyle}">
+                ${isExam ? '🎯 Sınav / Yazılı' : '🎉 Okul Etkinliği'}
+              </span>
+              <button data-del-ev="${ev.id}" class="text-slate-400 hover:text-rose-600 text-xs px-1" title="Kaydı Sil">✕</button>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">${ev.title}</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">${ev.notes || 'Ek açıklama belirtilmedi.'}</p>
+          </div>
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-500 font-medium">📅 ${formatDateTr(ev.date)}</span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg ${isExam ? 'bg-rose-600 text-white' : 'bg-indigo-600 text-white'}">${countdownLabel}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 5. ÇANTA KONTROL LİSTESİ RENDER
+    function renderBagChecklist() {
+      const container = document.getElementById('bagItemsContainer');
+      container.innerHTML = '';
+
+      const total = state.bagItems.length;
+      const checked = state.bagItems.filter(i => i.checked).length;
+      const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+      document.getElementById('bagProgressBar').style.width = `${pct}%`;
+      document.getElementById('bagProgressText').textContent = `${checked} / ${total} eşya çantaya yerleştirildi (%${pct})`;
+
+      if (total === 0) {
+        container.innerHTML = `<p class="col-span-full text-xs text-slate-400 py-6 text-center">Çanta kontrol listen boş. Yukarıdan günün ders materyallerini otomatik ekleyebilirsin.</p>`;
+        return;
+      }
+
+      state.bagItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border flex items-center justify-between gap-2 transition ${item.checked ? 'bg-emerald-50/40 border-emerald-200' : 'bg-slate-50 border-slate-200'}`;
+        card.innerHTML = `
+          <label class="flex items-center gap-3 cursor-pointer flex-1">
+            <input type="checkbox" data-toggle-bag="${item.id}" ${item.checked ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" />
+            <div>
+              <p class="text-xs sm:text-sm font-semibold ${item.checked ? 'line-through text-slate-400' : 'text-slate-800'}">${item.name}</p>
+              <span class="text-[11px] text-slate-500">${item.category}</span>
+            </div>
+          </label>
+          <button data-del-bag="${item.id}" class="text-slate-400 hover:text-rose-600 text-xs px-1.5 py-1" title="Sil">✕</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 6. GÜNLÜK VE HAFTALIK ÇALIŞMA PLANI RENDER
+    function renderStudyPlanner() {
+      const dailyList = document.getElementById('dailyStudyList');
+      const weeklyList = document.getElementById('weeklyStudyList');
+      dailyList.innerHTML = '';
+      weeklyList.innerHTML = '';
+
+      const dailyBlocks = state.studyBlocks.filter(b => b.scope === 'Günlük');
+      const weeklyBlocks = state.studyBlocks.filter(b => b.scope === 'Haftalık');
+
+      const dailyDone = dailyBlocks.filter(b => b.done).length;
+      const weeklyDone = weeklyBlocks.filter(b => b.done).length;
+
+      document.getElementById('dailyStudyBadge').textContent = `${dailyDone}/${dailyBlocks.length} Tamamlandı`;
+      document.getElementById('weeklyStudyBadge').textContent = `${weeklyDone}/${weeklyBlocks.length} Tamamlandı`;
+
+      if (dailyBlocks.length === 0) {
+        dailyList.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Bugün için çalışma oturumu eklenmedi.</p>`;
+      } else {
+        dailyBlocks.forEach(b => {
+          const row = document.createElement('div');
+          row.className = `p-3.5 rounded-xl border flex items-center justify-between gap-3 ${b.done ? 'bg-slate-50 border-slate-200 opacity-75' : 'bg-white border-slate-200'}`;
+          row.innerHTML = `
+            <label class="flex items-center gap-3 cursor-pointer flex-1">
+              <input type="checkbox" data-toggle-study="${b.id}" ${b.done ? 'checked' : ''} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+              <div>
+                <p class="text-xs sm:text-sm font-semibold ${b.done ? 'line-through text-slate-400' : 'text-slate-900'}">${b.topic}</p>
+                <span class="text-[11px] text-indigo-600 font-medium">⏰ ${b.duration} • ${b.day}</span>
+              </div>
+            </label>
+            <button data-del-study="${b.id}" class="text-slate-400 hover:text-rose-600 text-xs px-1.5" title="Sil">✕</button>
+          `;
+          dailyList.appendChild(row);
+        });
+      }
+
+      if (weeklyBlocks.length === 0) {
+        weeklyList.innerHTML = `<p class="col-span-full text-xs text-slate-400 py-4 text-center">Haftalık çalışma hedefi eklenmedi.</p>`;
+      } else {
+        weeklyBlocks.forEach(b => {
+          const card = document.createElement('div');
+          card.className = `p-3.5 rounded-xl border flex items-start justify-between gap-2 ${b.done ? 'bg-emerald-50/40 border-emerald-200' : 'bg-slate-50 border-slate-200'}`;
+          card.innerHTML = `
+            <label class="flex items-start gap-2.5 cursor-pointer flex-1">
+              <input type="checkbox" data-toggle-study="${b.id}" ${b.done ? 'checked' : ''} class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" />
+              <div>
+                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">${b.day}</span>
+                <p class="text-xs font-semibold mt-1 ${b.done ? 'line-through text-slate-400' : 'text-slate-900'}">${b.topic}</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Hedef Süre: ${b.duration}</p>
+              </div>
+            </label>
+            <button data-del-study="${b.id}" class="text-slate-400 hover:text-rose-600 text-xs px-1" title="Sil">✕</button>
+          `;
+          weeklyList.appendChild(card);
+        });
+      }
+    }
+
+    // SEKME GEÇİŞLERİ
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.className = 'nav-tab tab-active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2';
+        } else {
+          btn.className = 'nav-tab text-slate-600 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center gap-2';
+        }
+      });
+    }
+
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+    });
+
+    document.querySelectorAll('.goto-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.getAttribute('data-goto')));
+    });
+
+    document.getElementById('quickGoHomework').addEventListener('click', () => {
+      switchTab('homework');
+      document.getElementById('hwCourse').focus();
+    });
+
+    document.getElementById('quickGoExam').addEventListener('click', () => {
+      switchTab('exams');
+      document.getElementById('evTitle').focus();
+    });
+
+    document.getElementById('dashDaySelector').addEventListener('change', renderTopBadgesAndDashboard);
+
+    // FORM EKLEME OLAYLARI
+    document.getElementById('formAddClass').addEventListener('submit', e => {
+      e.preventDefault();
+      const day = document.getElementById('classDay').value;
+      const time = document.getElementById('classTime').value.trim();
+      const name = document.getElementById('className').value.trim();
+      const room = document.getElementById('classRoom').value.trim();
+      const materials = document.getElementById('classMaterials').value.trim();
+      if (!name || !time) return;
+
+      state.classes.push({
+        id: 'c_' + Date.now(),
+        day,
+        time,
+        name,
+        room,
+        materials
+      });
+      saveState();
+      renderAll();
+      e.target.reset();
+      document.getElementById('classDay').value = day;
+      showToast(`${day} gününe ${name} dersi eklendi`);
+    });
+
+    document.getElementById('formAddHomework').addEventListener('submit', e => {
+      e.preventDefault();
+      const course = document.getElementById('hwCourse').value.trim();
+      const title = document.getElementById('hwTitle').value.trim();
+      const dueDate = document.getElementById('hwDueDate').value;
+      const priority = document.getElementById('hwPriority').value;
+      if (!course || !title || !dueDate) return;
+
+      state.homework.push({
+        id: 'h_' + Date.now(),
+        course,
+        title,
+        dueDate,
+        priority,
+        completed: false
+      });
+      saveState();
+      renderAll();
+      e.target.reset();
+      document.getElementById('hwDueDate').value = TODAY_STR;
+      showToast('Yeni ödev hatırlatması kaydedildi');
+    });
+
+    document.getElementById('formAddExamEvent').addEventListener('submit', e => {
+      e.preventDefault();
+      const type = document.getElementById('evType').value;
+      const title = document.getElementById('evTitle').value.trim();
+      const date = document.getElementById('evDate').value;
+      const notes = document.getElementById('evNotes').value.trim();
+      if (!title || !date) return;
+
+      state.examEvents.push({
+        id: 'e_' + Date.now(),
+        type,
+        title,
+        date,
+        notes
+      });
+      saveState();
+      renderAll();
+      e.target.reset();
+      document.getElementById('evDate').value = TODAY_STR;
+      showToast(`${type} takvime eklendi`);
+    });
+
+    document.getElementById('formAddBagItem').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('bagItemName').value.trim();
+      const category = document.getElementById('bagItemCategory').value;
+      if (!name) return;
+
+      state.bagItems.push({
+        id: 'b_' + Date.now(),
+        name,
+        category,
+        checked: false
+      });
+      saveState();
+      renderAll();
+      e.target.reset();
+      showToast('Eşya çanta listesine eklendi');
+    });
+
+    document.getElementById('btnSyncBagFromSchedule').addEventListener('click', () => {
+      const selectedDay = document.getElementById('bagDaySelect').value;
+      const dayClasses = state.classes.filter(c => c.day === selectedDay && c.materials);
+      let addedCount = 0;
+
+      dayClasses.forEach(c => {
+        const label = `${c.materials} (${c.name})`;
+        const exists = state.bagItems.some(b => b.name.toLowerCase() === label.toLowerCase());
+        if (!exists) {
+          state.bagItems.push({
+            id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            name: label,
+            category: 'Ders Materyali',
+            checked: false
+          });
+          addedCount++;
+        }
+      });
+
+      saveState();
+      renderAll();
+      if (addedCount > 0) {
+        showToast(`${selectedDay} dersleri için ${addedCount} materyal çanta listesine eklendi`);
+      } else {
+        showToast(`${selectedDay} derslerinin materyalleri zaten listede mevcut`);
+      }
+    });
+
+    document.getElementById('btnUncheckAllBag').addEventListener('click', () => {
+      state.bagItems.forEach(item => { item.checked = false; });
+      saveState();
+      renderAll();
+      showToast('Çanta kontrol işaretleri yeni gün için sıfırlandı');
+    });
+
+    document.getElementById('formAddStudyBlock').addEventListener('submit', e => {
+      e.preventDefault();
+      const scope = document.getElementById('studyScope').value;
+      const day = document.getElementById('studyDay').value;
+      const topic = document.getElementById('studyTopic').value.trim();
+      const duration = document.getElementById('studyDuration').value.trim();
+      if (!topic || !duration) return;
+
+      state.studyBlocks.push({
+        id: 's_' + Date.now(),
+        scope,
+        day,
+        topic,
+        duration,
+        done: false
+      });
+      saveState();
+      renderAll();
+      e.target.reset();
+      showToast('Çalışma planına yeni hedef eklendi');
+    });
+
+    // FİLTRE BUTONLARI
+    document.querySelectorAll('.hw-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        hwFilter = btn.getAttribute('data-hwfilter');
+        document.querySelectorAll('.hw-filter-btn').forEach(b => {
+          b.className = b === btn
+            ? 'hw-filter-btn bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg'
+            : 'hw-filter-btn bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg';
+        });
+        renderHomework();
+      });
+    });
+
+    document.querySelectorAll('.ev-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        evFilter = btn.getAttribute('data-evfilter');
+        document.querySelectorAll('.ev-filter-btn').forEach(b => {
+          b.className = b === btn
+            ? 'ev-filter-btn bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg'
+            : 'ev-filter-btn bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg';
+        });
+        renderExamEvents();
+      });
+    });
+
+    // DELEGE EDİLMİŞ TIKLAMA VE CHECKBOX OLAYLARI
+    document.body.addEventListener('change', e => {
+      const hwId = e.target.getAttribute('data-toggle-hw');
+      if (hwId) {
+        const item = state.homework.find(h => h.id === hwId);
+        if (item) {
+          item.completed = e.target.checked;
+          saveState();
+          renderAll();
+        }
+      }
+
+      const bagId = e.target.getAttribute('data-toggle-bag');
+      if (bagId) {
+        const item = state.bagItems.find(b => b.id === bagId);
+        if (item) {
+          item.checked = e.target.checked;
+          saveState();
+          renderAll();
+        }
+      }
+
+      const studyId = e.target.getAttribute('data-toggle-study');
+      if (studyId) {
+        const item = state.studyBlocks.find(s => s.id === studyId);
+        if (item) {
+          item.done = e.target.checked;
+          saveState();
+          renderAll();
+        }
+      }
+    });
+
+    document.body.addEventListener('click', e => {
+      const delClassId = e.target.getAttribute('data-del-class');
+      if (delClassId) {
+        state.classes = state.classes.filter(c => c.id !== delClassId);
+        saveState();
+        renderAll();
+        showToast('Ders silindi');
+      }
+
+      const delHwId = e.target.getAttribute('data-del-hw');
+      if (delHwId) {
+        state.homework = state.homework.filter(h => h.id !== delHwId);
+        saveState();
+        renderAll();
+        showToast('Ödev silindi');
+      }
+
+      const delEvId = e.target.getAttribute('data-del-ev');
+      if (delEvId) {
+        state.examEvents = state.examEvents.filter(ev => ev.id !== delEvId);
+        saveState();
+        renderAll();
+        showToast('Takvim kaydı silindi');
+      }
+
+      const delBagId = e.target.getAttribute('data-del-bag');
+      if (delBagId) {
+        state.bagItems = state.bagItems.filter(b => b.id !== delBagId);
+        saveState();
+        renderAll();
+        showToast('Çanta eşyası silindi');
+      }
+
+      const delStudyId = e.target.getAttribute('data-del-study');
+      if (delStudyId) {
+        state.studyBlocks = state.studyBlocks.filter(s => s.id !== delStudyId);
+        saveState();
+        renderAll();
+        showToast('Çalışma hedefi silindi');
+      }
+    });
+
+    // ÖRNEK VERİLERİ SIFIRLAMA
+    document.getElementById('btnResetDemo').addEventListener('click', () => {
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      saveState();
+      renderAll();
+      showToast('Örnek öğrenci verileri başlangıç durumuna sıfırlandı');
+    });
+
+    // POMODORO ZAMANLAYICI
+    function updateTimerDisplay() {
+      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const secs = String(timerSeconds % 60).padStart(2, '0');
+      document.getElementById('pomodoroDisplay').textContent = `${mins}:${secs}`;
+    }
+
+    function setPomodoroMode(mode) {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      timerRunning = false;
+      timerMode = mode;
+      timerSeconds = mode === 'work' ? 25 * 60 : 5 * 60;
+      document.getElementById('btnTimerToggle').textContent = 'Başlat';
+      document.getElementById('pomodoroStatusText').textContent = mode === 'work' ? '25 dakikalık odaklanma oturumu hazır' : '5 dakikalık dinlenme molası hazır';
+      document.getElementById('btnModeWork').className = mode === 'work'
+        ? 'text-xs px-3 py-1 rounded-lg bg-indigo-600 font-semibold text-white'
+        : 'text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700';
+      document.getElementById('btnModeBreak').className = mode === 'break'
+        ? 'text-xs px-3 py-1 rounded-lg bg-indigo-600 font-semibold text-white'
+        : 'text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700';
+      updateTimerDisplay();
+    }
+
+    document.getElementById('btnModeWork').addEventListener('click', () => setPomodoroMode('work'));
+    document.getElementById('btnModeBreak').addEventListener('click', () => setPomodoroMode('break'));
+
+    document.getElementById('btnTimerToggle').addEventListener('click', () => {
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerRunning = false;
+        document.getElementById('btnTimerToggle').textContent = 'Devam Et';
+        document.getElementById('pomodoroStatusText').textContent = 'Duraklatıldı';
+      } else {
+        timerRunning = true;
+        document.getElementById('btnTimerToggle').textContent = 'Duraklat';
+        document.getElementById('pomodoroStatusText').textContent = timerMode === 'work' ? 'Odaklanma süresi işliyor...' : 'Mola süresi işliyor...';
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerRunning = false;
+            document.getElementById('btnTimerToggle').textContent = 'Başlat';
+            document.getElementById('pomodoroStatusText').textContent = 'Süre tamamlandı!';
+            showToast(timerMode === 'work' ? 'Tebrikler! 25 dakikalık çalışma oturumu bitti.' : 'Mola bitti, yeni oturuma geçebilirsin.');
+          }
+        }, 1000);
+      }
+    });
+
+    document.getElementById('btnTimerReset').addEventListener('click', () => {
+      setPomodoroMode(timerMode);
+    });
+
+    // Başlangıç Tarih Ayarları ve İlk Render
+    document.getElementById('hwDueDate').value = TODAY_STR;
+    document.getElementById('evDate').value = TODAY_STR;
+    renderAll();
+  </script>
+</body>
+</html>
